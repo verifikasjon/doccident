@@ -15,7 +15,7 @@ As an open source developer, there are few things more embarrassing than a user 
 
 Installation
 ---
-Just `npm install doccident` and run `doccident`. It will run all of the Javascript code examples tucked away in your markdown, and let you know if any blow up.
+Just `npm install @doccident/doccident` and run `doccident`. It will run all of the Javascript code examples tucked away in your markdown, and let you know if any blow up.
 
 Okay, how do I use it?
 ---
