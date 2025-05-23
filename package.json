@@ -1,0 +1,66 @@
+{
+  "name": "doccident",
+  "version": "0.0.1",
+  "description": "Test all the code in your markdown docs!",
+  "main": "dist/doctest.js",
+  "packageManager": "pnpm@10.10.0",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "bin": {
+    "doccident": "bin/cmd.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "test": "jest",
+    "prepublish": "pnpm run build",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BillaudCipher/doccident"
+  },
+  "keywords": [
+    "markdown",
+    "test",
+    "documentation"
+  ],
+  "contributors": [
+    "Nick Johnstone",
+    "Billaud Cipher <BillaudCipher@proton.me>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BillaudCipher/doccident/issues"
+  },
+  "homepage": "https://github.com/BillaudCipher/doccident",
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.27.1",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.23.0",
+    "@types/node": "^22.15.17",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/parser": "^8.32.0",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "chalk": "^2.4.2",
+    "commander": "^4.1.1",
+    "glob": "^7.2.3",
+    "globals": "^16.1.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-typescript"
+    ]
+  }
+}
