@@ -23,11 +23,12 @@ export const shellHandler: LanguageHandler = (code, snippet, _config, sandbox, i
 
     try {
         // Use the detected shell
-        const result = spawnSync(shell, [], { input: code, encoding: 'utf-8' });
+        const result = spawnSync(shell, ['-s'], { input: code, encoding: 'utf-8' });
         if (result.status === 0) {
             success = true;
         } else {
-            stack = result.stderr || result.stdout || `${shell} execution failed with non-zero exit code`;
+            const exitCode = result.status !== null ? result.status : 'signal';
+            stack = result.stderr || result.stdout || `${shell} execution failed with non-zero exit code: ${exitCode}`;
         }
     } catch (e: any) {
         stack = e.message || `Failed to spawn ${shell}`;
