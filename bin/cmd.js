@@ -5,9 +5,9 @@
 
 const { version } = require('../package');
 const doctest = require('..');
-const program = require('commander');
+const { program } = require('commander');
 const path = require('path');
-const glob = require('glob');
+const fg = require('fast-glob');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
 
@@ -30,15 +30,18 @@ program
     .name('doccident')
     .description('Test all the code in your markdown docs!')
     .version(version, '-v, --version', 'output the current version')
+    .argument('[glob]', 'glob pattern for files to test')
     .helpOption('-h, --help', 'output usage informations')
     .option('-c, --config <path>', 'custom config location', path.join(process.cwd(), '/.doccident-setup.js'))
     .option('--test-output', 'output the test results to the console')
     .parse(process.argv);
 
+const options = program.opts();
+
 // Parse config file
 (async () => {
-    if (program.config) {
-        const configPath = path.resolve(program.config);
+    if (options.config) {
+        const configPath = path.resolve(options.config);
 
         if (fs.existsSync(configPath)) {
             try {
@@ -51,33 +54,31 @@ program
         }
     }
 
-    if (program.testOutput) {
+    if (options.testOutput) {
         config.testOutput = true;
     }
 
     // Resolve files
-    glob(
-        program.args[0] || DEFAULT_GLOB,
-        {
-            ignore: [...config.ignore, ...DEFAULT_IGNORE]
-        },
-        (err, files) => {
-
-            if (err) {
-                console.trace(err);
+    try {
+        const files = await fg(
+            program.args[0] || DEFAULT_GLOB,
+            {
+                ignore: [...config.ignore, ...DEFAULT_IGNORE]
             }
+        );
 
-            // Run tests
-            const results = doctest.runTests(files, config);
+        // Run tests
+        const results = doctest.runTests(files, config);
 
-            console.log('\n');
-            doctest.printResults(results);
+        console.log('\n');
+        doctest.printResults(results);
 
-            // Exit with error-code if any test failed
-            const failures = results.filter(result => result.status === 'fail');
-            if (failures.length > 0) {
-                process.exit(1);
-            }
+        // Exit with error-code if any test failed
+        const failures = results.filter(result => result.status === 'fail');
+        if (failures.length > 0) {
+            process.exit(1);
         }
-    );
+    } catch (err) {
+        console.trace(err);
+    }
 })();
