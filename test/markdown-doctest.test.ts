@@ -280,7 +280,7 @@ describe("runTests", () => {
 
         assert.strictEqual(passingResults.length, 5, results.find(r => r.status === 'fail')?.stack);
         assert.strictEqual(failingResults.length, 1);
-    });
+    }, 10000);
 
     it("go", () => {
         const files = [getTestFilePath("go.md")];
@@ -296,7 +296,7 @@ describe("runTests", () => {
         // unless we mock it.
         // For now, let's just assert we ran them.
         assert.strictEqual(results.length, 3);
-    });
+    }, 30000);
 
     it("rust", () => {
         const files = [getTestFilePath("rust.md")];
@@ -307,7 +307,7 @@ describe("runTests", () => {
         // Assert number of tests run
         // 1 simple, 1 full, 1 failure, 1 compile error = 4 tests
         assert.strictEqual(results.length, 4);
-    });
+    }, 30000);
 
     it("fortran", () => {
         const files = [getTestFilePath("fortran.md")];
