@@ -36,7 +36,7 @@ function printFailure(result: TestResult) {
 
     console.log(stackDetails);
 
-    const variableNotDefined = stackDetails.match(/(\w+) is not defined/);
+    const variableNotDefined = stackDetails.match(/(\w{1,256}) is not defined/);
 
     if (variableNotDefined) {
         const variableName = variableNotDefined[1];
@@ -61,19 +61,27 @@ module.exports = {
 }
 
 function relevantStackDetails(stack: string) {
-    const match = stack.match(/([\w\W]*?)at eval/) ||
-        // eslint-disable-next-line no-useless-escape
-        stack.match(/([\w\W]*)at [\w*\/]*?doctest.js/);
+    const evalIndex = stack.indexOf("at eval");
 
-    if (match !== null) {
-        return match[1];
+    if (evalIndex !== -1) {
+        return stack.substring(0, evalIndex);
+    }
+
+    const lines = stack.split("\n");
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.includes("doctest.js") && line.trim().startsWith("at ")) {
+            return lines.slice(0, i).join("\n") + "\n";
+        }
     }
 
     return stack;
 }
 
 function markDownErrorLocation(result: TestResult) {
-    const match = result.stack.match(/eval.*<.*>:(\d+):(\d+)/);
+    const match = result.stack.match(/eval.*?<[^>]*>:(\d+):(\d+)/);
 
     if (match) {
         const mdLineNumber = parseInt(match[1], 10);
