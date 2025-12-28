@@ -27,7 +27,7 @@ export const shellHandler: LanguageHandler = (code, snippet, _config, sandbox, i
         if (result.status === 0) {
             success = true;
         } else {
-            stack = result.stderr || `${shell} execution failed with non-zero exit code`;
+            stack = result.stderr || result.stdout || `${shell} execution failed with non-zero exit code`;
         }
     } catch (e: any) {
         stack = e.message || `Failed to spawn ${shell}`;

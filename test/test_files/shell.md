@@ -27,6 +27,7 @@ fi
 ## Zsh Specific
 ```zsh
 # Zsh arrays are 1-indexed
+emulate -L zsh
 arr=(a b c)
 if [[ ${arr[1]} != "a" ]]; then
     exit 1
