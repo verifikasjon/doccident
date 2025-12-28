@@ -1,9 +1,11 @@
 export interface Snippet {
     code: string;
+    language: string;
     fileName: string;
     lineNumber: number;
     complete: boolean;
     skip: boolean;
+    indentation?: string;
 }
 
 export interface ParsedFile {
@@ -48,4 +50,3 @@ export interface TestResult {
     codeSnippet: Snippet;
     stack: string;
 }
-

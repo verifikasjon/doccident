@@ -15,12 +15,35 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      # -- Language Runtimes & Compilers --
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install System Dependencies (Fortran, COBOL)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran gnucobol
+
+      # -- Project Setup & Test --
+
       - name: Install dependencies
         run: npm ci --verbose --foreground-scripts
         timeout-minutes: 10
@@ -44,4 +67,5 @@ jobs:
         run: npm ci --verbose --foreground-scripts
         timeout-minutes: 10
       - run: npm publish --access public
-
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
