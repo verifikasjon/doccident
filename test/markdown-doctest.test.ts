@@ -1,5 +1,5 @@
-/* globals describe, it, beforeEach, afterEach */
 "use strict";
+
 
 import path from "path";
 import assert from "assert";
@@ -346,5 +346,83 @@ describe("Results printing and error handling", () => {
             return line.includes("Failed - ") &&
                 (line.includes(":") || line.includes(failingResults[0].codeSnippet.fileName));
         }));
+    });
+
+    it("truncates stack trace at doctest.js when eval is not present", () => {
+        const stack = `Error: failure
+    at userFunction (user.js:1:1)
+    at doctest.js (src/doctest.js:50:5)
+    at main.js:1:1`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should include userFunction
+        assert(logOutput.some(line => line.includes("userFunction")));
+        // Should NOT include main.js which is after doctest.js
+        assert(!logOutput.some(line => line.includes("main.js")));
+    });
+
+    it("prints full stack if neither eval nor doctest.js is present", () => {
+        const stack = `Error: failure
+    at userFunction (user.js:1:1)
+    at otherFunction (other.js:1:1)`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should include both
+        assert(logOutput.some(line => line.includes("userFunction")));
+        assert(logOutput.some(line => line.includes("otherFunction")));
+    });
+
+    it("falls back to file:line location if eval line format does not match", () => {
+        const stack = `Error: failure
+    at eval (some weird format)`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should fall back to test.md:10
+        assert(logOutput.some(line => line.includes("test.md:10")));
+    });
+
+    it("falls back to file:line location if eval is not in stack", () => {
+        const stack = `Error: failure
+    at function (file.js:1:1)`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should fall back to test.md:10
+        assert(logOutput.some(line => line.includes("test.md:10")));
     });
 });

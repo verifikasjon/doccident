@@ -85,7 +85,7 @@ function markDownErrorLocation(result: TestResult) {
 
     for (const line of lines) {
         if (line.includes("eval")) {
-            const match = line.match(/<([^>]+)>:(\d+):(\d+)/);
+            const match = line.match(/<([^><]+)>:(\d+):(\d+)/);
 
             if (match) {
                 const mdLineNumber = parseInt(match[2], 10);

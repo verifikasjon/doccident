@@ -30,18 +30,43 @@ You can also target specific files or directories:
 npx doccident docs/**/*.md
 ```
 
-### Writing Testable Examples
+### Language Support & Recipes
 
-`doccident` executes code inside `js`, `javascript`, `es6`, `ts`, or `typescript` fenced code blocks:
+`doccident` executes code inside `js`, `javascript`, `es6`, `ts`, or `typescript` fenced code blocks. It automatically transforms modern JavaScript and TypeScript using **esbuild** before execution.
+
+#### JavaScript
+
+Use `js`, `javascript`, or `es6` for JavaScript examples.
+
+**Recipe:**
+
+1.  Use `js` fenced code blocks.
+2.  Write standard JavaScript (ES6+ supported).
+3.  Use `require` to load dependencies defined in your configuration.
 
     ```js
-    const result = 1 + 1;
-    console.log(result); // Output verified
+    const { sum } = require('./math-utils');
+    const result = sum(1, 2);
     ```
 
+#### TypeScript
+
+Use `ts` or `typescript` for TypeScript examples.
+
+**Recipe:**
+
+1.  Use `ts` fenced code blocks.
+2.  Include type annotations to demonstrate correct usage.
+3.  `doccident` strips types during execution, so your examples serve as both documentation and functional tests.
+
     ```ts
-    const x: number = 42;
-    console.log(x);
+    interface User {
+      id: number;
+      name: string;
+    }
+
+    const user: User = { id: 1, name: 'Doccident' };
+    console.log(user.name);
     ```
 
 ### Skipping Examples
