@@ -32,7 +32,7 @@
     "Nick Johnstone",
     "Billaud Cipher <BillaudCipher@proton.me>"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/BillaudCipher/doccident/issues"
   },

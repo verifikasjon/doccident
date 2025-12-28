@@ -22,7 +22,8 @@ const config = {
     require: {},
     globals: {},
     ignore: [],
-    testOutput: false
+    testOutput: false,
+    timeout: 300000 // Default 5 minutes
 };
 
 // Setup commander
@@ -34,6 +35,8 @@ program
     .helpOption('-h, --help', 'output usage informations')
     .option('-c, --config <path>', 'custom config location', path.join(process.cwd(), '/.doccident-setup.js'))
     .option('--test-output', 'output the test results to the console')
+    .option('--update-output', 'update the output blocks in markdown files')
+    .option('--timeout <ms>', 'timeout for each snippet execution in milliseconds', '300000')
     .parse(process.argv);
 
 const options = program.opts();
@@ -56,6 +59,14 @@ const options = program.opts();
 
     if (options.testOutput) {
         config.testOutput = true;
+    }
+    
+    if (options.updateOutput) {
+        config.updateOutput = true;
+    }
+    
+    if (options.timeout) {
+        config.timeout = parseInt(options.timeout, 10);
     }
 
     // Resolve files
