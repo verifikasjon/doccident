@@ -24,13 +24,12 @@ if [ "$MY_VAR" != "hello" ]; then
 fi
 ```
 
-## Zsh Specific
-```zsh
-# Zsh arrays are 1-indexed
-emulate zsh
+## Bash Arrays
+```bash
+# Bash arrays are 0-indexed
 arr=(a b c)
-if [[ ${arr[1]} != "a" ]]; then
-    echo "Expected 'a', got '${arr[1]}'"
+if [[ ${arr[0]} != "a" ]]; then
+    echo "Expected 'a', got '${arr[0]}'"
     exit 1
 fi
 ```
