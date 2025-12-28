@@ -1,6 +1,13 @@
 import { spawnSync } from "child_process";
 import { LanguageHandler } from "./interface";
 
+// Check if BASIC code is a complete program (has END statement)
+function isCompleteBASIC(code: string): boolean {
+    // Look for END as a statement (possibly with line number prefix)
+    // Matches: "END", "10 END", "END\n", etc.
+    return /^\d*\s*END\s*$/im.test(code);
+}
+
 export const basicHandler: LanguageHandler = (code, _snippet, config, sandbox, isSharedSandbox) => {
     let success = false;
     let stack = "";
@@ -17,6 +24,12 @@ export const basicHandler: LanguageHandler = (code, _snippet, config, sandbox, i
         const trimmedCode = code.replace(/\n+$/, '');
         context._basicContext += trimmedCode + "\n";
         code = context._basicContext;
+        
+        // In shared mode, only run when program is complete (has END)
+        // Incomplete snippets are setup code - mark as pass without running
+        if (!isCompleteBASIC(code)) {
+            return { success: true, stack: "", output: "" };
+        }
     }
 
     try {
