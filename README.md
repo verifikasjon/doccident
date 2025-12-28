@@ -670,7 +670,7 @@ This separation of concerns allows `doccident` to be easily extended—for examp
 
 This project is licensed under the Apache License, Version 2.0.
 
-Copyright (c) 2025 Billaud Cipher
+Copyright (c) 2025 Tim O'Brien
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -686,7 +686,7 @@ limitations under the License.
 
 ---
 
-**Note**: This project was originally forked from [markdown-doctest](https://github.com/nick-johnstone/markdown-doctest) by Nick Johnstone. While the original inspiration and some core concepts remain, the **entire codebase has been replaced** and significantly expanded by Billaud Cipher to support a wide range of compiled and interpreted languages, shared state mechanisms, and output verification. All subsequent additions and modifications are covered by the Apache 2.0 Software License.
+**Note**: This project was originally forked from [markdown-doctest](https://github.com/nick-johnstone/markdown-doctest) by Nick Johnstone. While the original inspiration and some core concepts remain, the **entire codebase has been replaced** and significantly expanded by Tim O'Brien to support a wide range of compiled and interpreted languages, shared state mechanisms, and output verification. All subsequent additions and modifications are covered by the Apache 2.0 Software License.
 
 ## Agentic AI Guide
 
