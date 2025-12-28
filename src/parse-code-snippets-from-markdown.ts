@@ -142,7 +142,8 @@ function setArgs(argsStr: string) {
     return (snippets: State) => {
         // Simple space splitting, maybe improve for quotes?
         // Assuming simple space separation for now.
-        snippets.args = argsStr.split(/\s+/);
+        // Filter out empty strings that can occur from leading/trailing whitespace
+        snippets.args = argsStr.split(/\s+/).filter(arg => arg.length > 0);
         return snippets;
     };
 }

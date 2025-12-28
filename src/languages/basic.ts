@@ -12,7 +12,10 @@ export const basicHandler: LanguageHandler = (code, _snippet, config, sandbox, i
         if (!context._basicContext) {
             context._basicContext = "";
         }
-        context._basicContext += code + "\n";
+        // Trim trailing newline from code before adding to avoid blank lines
+        // (code already has trailing newline from parser)
+        const trimmedCode = code.replace(/\n+$/, '');
+        context._basicContext += trimmedCode + "\n";
         code = context._basicContext;
     }
 

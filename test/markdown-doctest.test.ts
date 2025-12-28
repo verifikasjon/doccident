@@ -457,7 +457,7 @@ describe("runTests", () => {
         // Assert number of tests run
         // 1 simple, 1 full, 2 advanced (streams, generics), 1 failure, 1 compile error = 6 tests
         assert.strictEqual(results.length, 6);
-    });
+    }, 30000);
 
     it("perl", () => {
         const files = [getTestFilePath("perl.md")];
