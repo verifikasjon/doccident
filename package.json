@@ -1,9 +1,8 @@
 {
   "name": "@doccident/doccident",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Test all the code in your markdown docs!",
   "main": "dist/doctest.js",
-  "packageManager": "pnpm@10.10.0",
   "files": [
     "dist",
     "bin"
@@ -15,9 +14,9 @@
     "build": "tsc",
     "lint": "eslint . --ext .ts",
     "test": "jest",
-    "prepublish": "pnpm run build",
+    "precommit": "npm run lint && npm run test",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm run clean && pnpm run build"
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
