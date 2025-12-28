@@ -1,47 +1,16 @@
-/* eslint-disable no-console */
 "use strict";
 
 import { readFileSync } from "fs";
 import { runInNewContext } from "vm";
-import { transformSync } from "@babel/core";
-import presetEnv from "@babel/preset-env";
+import { transformSync } from "esbuild";
 import chalk from "chalk";
 
-function flatten<T>(arr: T[][]): T[] {
-    return Array.prototype.concat.apply([], arr);
-}
+import { flatten } from "./utils";
+import parseCodeSnippets from "./parse-code-snippets-from-markdown";
+import { Config, Sandbox, TestResult, ParsedFile, FileInfo, Snippet } from "./types";
+import { printResults } from "./reporter";
 
-import parseCodeSnippets, {
-    Snippet,
-    ParsedFile,
-    FileInfo,
-} from "./parse-code-snippets-from-markdown";
-
-interface Config {
-    testOutput?: boolean;
-    globals?: {
-        [key: string]: any;
-    };
-    require?: {
-        [key: string]: any;
-    };
-    regexRequire?: {
-        [key: string]: (...match: string[]) => any;
-    };
-    babel?: any;
-    beforeEach?: () => any;
-    transformCode?: (code: string) => string;
-}
-
-interface Sandbox {
-    [key: string]: any;
-}
-
-interface TestResult {
-    status: "pass" | "fail" | "skip";
-    codeSnippet: Snippet;
-    stack: string;
-}
+export { printResults };
 
 export function runTests(files: string[], config: Config): TestResult[] {
     const results = files
@@ -69,7 +38,7 @@ function makeTestSandbox(config: Config): Sandbox {
             }
         }
 
-        if (config.require[moduleName] === undefined) {
+        if (config.require === undefined || config.require[moduleName] === undefined) {
             throw moduleNotFoundError(moduleName);
         }
 
@@ -105,7 +74,7 @@ function testFile(config: Config) {
     };
 }
 
-function test(config: Config, filename: string, sandbox?: Sandbox) {
+function test(config: Config, _filename: string, sandbox?: Sandbox) {
     return (codeSnippet: Snippet): TestResult => {
         if (codeSnippet.skip) {
             return { status: "skip", codeSnippet, stack: "" };
@@ -119,7 +88,7 @@ function test(config: Config, filename: string, sandbox?: Sandbox) {
         if (config.transformCode) {
             try {
                 code = config.transformCode(code);
-            } catch (e) {
+            } catch (e: any) {
                 return { status: "fail", codeSnippet, stack: "Encountered an error while transforming snippet: \n" + e.stack };
             }
         }
@@ -134,19 +103,18 @@ function test(config: Config, filename: string, sandbox?: Sandbox) {
             config.beforeEach();
         }
 
-        const options = {
-            presets: [presetEnv],
-        };
-
         try {
-            if (config.babel !== false) {
-                code = transformSync(code, options).code;
-            }
+            const result = transformSync(code, {
+                loader: 'ts',
+                format: 'cjs',
+                target: 'node12'
+            });
+            code = result.code || "";
 
-            runInNewContext(code, perSnippetSandbox || sandbox);
+            runInNewContext(code, perSnippetSandbox! || sandbox);
 
             success = true;
-        } catch (e) {
+        } catch (e: any) {
             stack = e.stack || "";
         }
 
@@ -156,76 +124,6 @@ function test(config: Config, filename: string, sandbox?: Sandbox) {
 
         return { status, codeSnippet, stack };
     };
-}
-
-export function printResults(results: TestResult[]) {
-    results.filter((result) => result.status === "fail").forEach(printFailure);
-
-    const passingCount = results.filter((result) => result.status === "pass")
-        .length;
-    const failingCount = results.filter((result) => result.status === "fail")
-        .length;
-    const skippingCount = results.filter((result) => result.status === "skip")
-        .length;
-
-    function successfulRun() {
-        return failingCount === 0;
-    }
-
-    console.log(chalk.green("Passed: " + passingCount));
-
-    if (skippingCount > 0) {
-        console.log(chalk.yellow("Skipped: " + skippingCount));
-    }
-
-    if (successfulRun()) {
-        console.log(chalk.green("\nSuccess!"));
-    } else {
-        console.log(chalk.red("Failed: " + failingCount));
-    }
-}
-
-function printFailure(result: TestResult) {
-    console.log(chalk.red(`Failed - ${markDownErrorLocation(result)}`));
-
-    const stackDetails = relevantStackDetails(result.stack);
-
-    console.log(stackDetails);
-
-    const variableNotDefined = stackDetails.match(/(\w+) is not defined/);
-
-    if (variableNotDefined) {
-        const variableName = variableNotDefined[1];
-
-        console.log(
-            `You can declare ${chalk.blue(variableName)} in the ${chalk.blue(
-                "globals",
-            )
-            } section in ${chalk.grey(".doccident-setup.js")}`,
-        );
-
-        console.log(`
-For example:
-${chalk.grey("// .doccident-setup.js")}
-module.exports = {
-  globals: {
-    ${chalk.blue(variableName)}: ...
-  }
-}
-    `);
-    }
-}
-
-function relevantStackDetails(stack: string) {
-    const match = stack.match(/([\w\W]*?)at eval/) ||
-        // eslint-disable-next-line no-useless-escape
-        stack.match(/([\w\W]*)at [\w*\/]*?doctest.js/);
-
-    if (match !== null) {
-        return match[1];
-    }
-
-    return stack;
 }
 
 function moduleNotFoundError(moduleName: string) {
@@ -243,19 +141,4 @@ module.exports = {
   }
 }
   `);
-}
-
-function markDownErrorLocation(result: TestResult) {
-    const match = result.stack.match(/eval.*<.*>:(\d+):(\d+)/);
-
-    if (match) {
-        const mdLineNumber = parseInt(match[1], 10);
-        const columnNumber = parseInt(match[2], 10);
-
-        const lineNumber = result.codeSnippet.lineNumber + mdLineNumber;
-
-        return `${result.codeSnippet.fileName}:${lineNumber}:${columnNumber}`;
-    }
-
-    return `${result.codeSnippet.fileName}:${result.codeSnippet.lineNumber}`;
 }

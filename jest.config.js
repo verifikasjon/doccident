@@ -1,4 +1,6 @@
 module.exports = {
+    preset: 'ts-jest',
+    testEnvironment: 'node',
     collectCoverage: true,
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov'],
@@ -11,4 +13,8 @@ module.exports = {
             statements: 70,
         },
     },
-}; 
+    transform: {
+        '^.+\\.tsx?$': 'ts-jest',
+        '^.+\\.js$': 'ts-jest',
+    },
+};

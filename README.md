@@ -1,179 +1,122 @@
-[![npm version](https://badge.fury.io/js/doccident.svg)](http://badge.fury.io/js/doccident)
-[![Build Status](https://travis-ci.org/Widdershin/doccident.svg?branch=master)](https://travis-ci.org/Widdershin/doccident)
-[![Greenkeeper badge](https://badges.greenkeeper.io/Widdershin/doccident.svg)](https://greenkeeper.io/)
-
-* * *
-
 # doccident
 
-Test all the code in your markdown docs!
+[![npm version](https://badge.fury.io/js/doccident.svg)](http://badge.fury.io/js/doccident)
 
-Why on earth?
----
+**Test the code examples in your Markdown documentation.**
 
-As an open source developer, there are few things more embarrassing than a user opening an issue to inform you that your README example is broken! With  `doccident`, you can rest easy knowing that your example code is *actually runnable*.
+## Overview
 
-Installation
----
-Just `npm install @doccident/doccident` and run `doccident`. It will run all of the Javascript code examples tucked away in your markdown, and let you know if any blow up.
+As an open source developer, few things are more frustrating for users than encountering broken examples in a README. `doccident` ensures your documentation remains accurate by treating your examples as testable code. It parses your Markdown files, extracts JavaScript and TypeScript code blocks, and executes them in a sandboxed environment to verify they run without errors.
 
-Okay, how do I use it?
----
+> **Note**: `doccident` primarily verifies that your code *runs* without throwing exceptions. While you can add assertions to your examples to test correctness, its main goal is to ensure your documentation examples are valid and runnable.
 
-Let's try it on this repo!
-
-```js
-var a = 5;
-
-var b = 10;
-
-console.log(a + c);
-```
-
-There's a problem with that example. `doccident` finds it for us:
+## Installation
 
 ```bash
-$ doccident
-x..
-
-Failed - README.md:32:17
-evalmachine.<anonymous>:7
-console.log(a + c);
-                ^
-
-ReferenceError: c is not defined
+npm install --save-dev @doccident/doccident
 ```
 
-Awesome! No excuse for broken documentation ever again, right? :wink:
+## Usage
 
-We can also run specific files or folders by running `doccident` with a glob, like `doccident docs/**/*.md`. By default `doccident` will recursively run all the `.md` or `.markdown` files starting with the current directory, with the exception of the `node_modules` directory.
+Run `doccident` in your project root. By default, it recursively checks all `.md` and `.markdown` files (excluding `node_modules`).
 
-Note: `doccident` doesn't actually attempt to provide any guarantee that your code worked, only that it didn't explode in a horrible fashion. If you would like to use `doccident` for actually testing the correctness of your code, you can add some `assert`s to your examples.
+```bash
+npx doccident
+```
 
-`doccident` is not a replacement for your test suite. It's designed to run with your CI build and give you peace of mind that all of your examples are at least vaguely runnable.
+You can also target specific files or directories:
 
-So how do I write those examples?
----
+```bash
+npx doccident docs/**/*.md
+```
 
-In your markdown files, anything inside of code blocks with 'js' or 'es6' will be run. E.g:
+### Writing Testable Examples
+
+`doccident` executes code inside `js`, `javascript`, `es6`, `ts`, or `typescript` fenced code blocks:
 
     ```js
-    console.log("Yay, tests in my docs");
+    const result = 1 + 1;
+    console.log(result); // Output verified
     ```
 
-    ```es6
-    const a = 5;
-    console.log({a, foo: 'test'});
+    ```ts
+    const x: number = 42;
+    console.log(x);
     ```
 
-I have a code example I don't want tested!
----
-You can tell `doccident` to skip examples by adding `<!-- skip-example -->` before the example. E.g:
+### Skipping Examples
+
+To skip a specific code block, add the `<!-- skip-example -->` comment immediately before it:
 
     <!-- skip-example -->
     ```js
-    // not a runnable example
-
-    var foo = download(...);
+    // This code will not be executed
+    fetch('https://example.com');
     ```
 
-How do requires work? And other setup logic?
----
+## Configuration
 
-You can `require` any needed modules or example helpers in `.doccident-setup.js`. E.g:
+Create a `.doccident-setup.js` file in your project root to configure the test environment.
 
-<!-- skip-example -->
-```js
+### Injecting Dependencies (`require`)
+
+If your examples use external libraries, provide them here. This allows your examples to `require` modules just like users would:
+
+```javascript
 // .doccident-setup.js
 module.exports = {
   require: {
-    Rx: require('rx')
-  },
+    // Make 'my-library' available when examples call require('my-library')
+    'my-library': require('./index.js'),
+    'lodash': require('lodash')
+  }
+};
+```
 
+### Global Variables
+
+Define global variables available to all snippets:
+
+```javascript
+module.exports = {
   globals: {
-    $: require('jquery')
+    $: require('jquery'),
+    window: {}
   }
-}
+};
 ```
 
-Anything exported under `require` will then be used by any examples that `require` that key.
-You must explicitly configure all of the dependencies used in your examples.
+### Advanced Configuration
 
-Anything exported under `globals` will be available globally across all examples.
+*   **`regexRequire`**: Handle dynamic requires that match a pattern.
+*   **`beforeEach`**: Function to run before each snippet (e.g., to reset global state).
+*   **`transformCode`**: Pre-process code before execution (e.g., to strip out display-only syntax).
 
-You can also specify a regexRequire section to handle anything more complex than an exact string match!
+## Architecture and Approach
 
-<!-- skip-example -->
-```js
-// .doccident-setup.js
-module.exports = {
-  require: {
-    Rx: require('rx')
-  },
+`doccident` is designed to be a lightweight, flexible testing harness for documentation. The codebase is modularized to separate parsing, execution, and reporting, ensuring maintainability and extensibility.
 
-  regexRequire: {
-    'rx/(.*)': function (fullPath, matchedModuleName) {
-      return require('./dist/' + matchedModuleName);
-    }
-  }
-}
-```
+### Core Modules
 
-Do I have to enable es6 support?
----
+1.  **Parser (`src/parse-code-snippets-from-markdown.ts`)**
+    *   Reads Markdown content line-by-line.
+    *   Uses a robust state machine to identify code fences and control comments (like `skip-example`).
+    *   Extracts valid snippets into structured objects containing code, file paths, and line numbers.
+    *   **TypeScript Support**: Now recognizes `ts` and `typescript` blocks in addition to JS.
 
-Nope, ES6 support is on by default. You can disable `babel` support
-in your `.doccident-setup.js` file.
-This will speed things up drastically:
+2.  **Test Runner (`src/doctest.ts`)**
+    *   The orchestrator of the application.
+    *   Iterates through parsed snippets and manages the execution lifecycle.
+    *   **Sandboxing**: Uses Node.js's `vm` module (`runInNewContext`) to execute code in isolation. This prevents examples from polluting the global scope of the runner itself, while allowing controlled injection of dependencies via the configuration.
+    *   **Transformation**: Uses **esbuild** to compile modern JavaScript and TypeScript code down to a compatible format before execution. This ensures that modern syntax and type annotations run correctly in all environments, and is significantly faster than the previous Babel implementation.
 
-<!-- skip-example -->
-```js
-//.doccident-setup.js
-module.exports = {
-  babel: false
-}
-```
+3.  **Reporter (`src/reporter.ts`)**
+    *   Collects execution results (pass, fail, skip).
+    *   Formats output using `chalk` for readability.
+    *   **Error Mapping**: Crucially, it maps execution errors back to the specific line number in the original Markdown file, making it easy to identify exactly which line in your documentation caused the failure.
 
-What if I have global state that needs to be reset after my examples run?
----
-<!-- skip-example -->
-```js
-//.doccident-setup.js
-module.exports = {
-  beforeEach: function () {
-    // reset your awesome global state
-  }
-}
-```
+4.  **Types & Utils**
+    *   Shared interfaces (`src/types.ts`) ensure type safety across the application.
+    *   Utility functions (`src/utils.ts`) provide common helpers.
 
-You can specify a function to be run before each example in your `.doccident-setup.js`.
-
-What if I want to remove custom syntax from examples before processing?
----
-
-<!-- skip-example -->
-```js
-//.doccident-setup.js
-module.exports = {
-  transformCode(code) {
-    // Remove ... from code syntax
-    return code.replace(/\.\.\./g, "");
-  }
-}
-```
-
-Who uses doccident?
----
-
-All of these projects either run `doccident` with `npm test` or as part of their CI process:
-
-* [lodash](https://github.com/lodash/lodash)
-* [Moment](https://github.com/moment/momentjs.com)
-* [RxJS](https://github.com/ReactiveX/RxJS)
-* [most](https://github.com/cujojs/most)
-* [xstream](https://github.com/staltz/xstream)
-* [cyclejs/time](https://github.com/cyclejs/time)
-* [rx.schedulers](https://github.com/Reactive-Extensions/rx.schedulers)
-* [rx.priorityqueue](https://github.com/Reactive-Extensions/rx.priorityqueue)
-* [rx.disposables](https://github.com/Reactive-Extensions/rx.disposables)
-* [rx-undoable](https://github.com/Widdershin/rx-undoable)
+This separation of concerns allows `doccident` to be easily extended—for example, by adding new parsers for different documentation formats or custom reporters for CI environments.
