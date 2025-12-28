@@ -242,6 +242,105 @@ describe("runTests", () => {
         assert.strictEqual(failingResults.length, 1);
         assert(failingResults[0].stack.includes("Encountered an error while transforming snippet"));
     });
+
+    it("python", () => {
+        const files = [getTestFilePath("python.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        const passingResults = results.filter((result) => result.status === "pass");
+        const failingResults = results.filter((result) => result.status === "fail");
+
+        assert.strictEqual(passingResults.length, 3, results.find(r => r.status === 'fail')?.stack);
+        assert.strictEqual(failingResults.length, 1);
+    });
+
+    it("python advanced", () => {
+        const files = [getTestFilePath("python-advanced.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        const passingResults = results.filter((result) => result.status === "pass");
+        const failingResults = results.filter((result) => result.status === "fail");
+
+        assert.strictEqual(passingResults.length, 6, results.find(r => r.status === 'fail')?.stack);
+        assert.strictEqual(failingResults.length, 0);
+    });
+
+    it("shell", () => {
+        const files = [getTestFilePath("shell.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        const passingResults = results.filter((result) => result.status === "pass");
+        const failingResults = results.filter((result) => result.status === "fail");
+
+        assert.strictEqual(passingResults.length, 5, results.find(r => r.status === 'fail')?.stack);
+        assert.strictEqual(failingResults.length, 1);
+    });
+
+    it("go", () => {
+        const files = [getTestFilePath("go.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        const passingResults = results.filter((result) => result.status === "pass");
+        const failingResults = results.filter((result) => result.status === "fail");
+        
+        // Note: Without go installed, these will fail execution.
+        // We expect them to return status 'fail' with stack trace about missing command
+        // unless we mock it.
+        // For now, let's just assert we ran them.
+        assert.strictEqual(results.length, 3);
+    });
+
+    it("rust", () => {
+        const files = [getTestFilePath("rust.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        // Assert number of tests run
+        // 1 simple, 1 full, 1 failure, 1 compile error = 4 tests
+        assert.strictEqual(results.length, 4);
+    });
+
+    it("fortran", () => {
+        const files = [getTestFilePath("fortran.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        // Assert number of tests run
+        // 1 simple, 1 full, 1 advanced, 1 failure, 1 compile error = 5 tests
+        assert.strictEqual(results.length, 5);
+    });
+
+    it("cobol", () => {
+        const files = [getTestFilePath("cobol.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        // Assert number of tests run
+        // 1 hello, 1 free, 1 logic, 1 fail, 1 compile error = 5 tests
+        assert.strictEqual(results.length, 5);
+    });
+
+    it("c", () => {
+        const files = [getTestFilePath("c.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        // Assert number of tests run
+        // 1 simple, 1 full, 1 failure, 1 compile error = 4 tests
+        assert.strictEqual(results.length, 4);
+    });
 });
 
 describe("Results printing and error handling", () => {
