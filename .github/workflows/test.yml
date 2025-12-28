@@ -8,20 +8,46 @@ on:
       - main
       - 'release/**'
       - 'feature/**'
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # -- Language Runtimes & Compilers --
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install --frozen-lockfile --strict-peer-dependencies
-      - run: pnpm run lint
-      - run: pnpm run build
-      - run: pnpm test --coverage
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install System Dependencies (Fortran, COBOL)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran gnucobol
+
+      # -- Project Setup & Test --
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      
+      # -- Coverage --
+      
       - uses: codecov/codecov-action@v5
         with:
           slug: doccident

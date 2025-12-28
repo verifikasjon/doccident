@@ -2,8 +2,10 @@
 
 import { State, ParsedFile, FileInfo } from "./types";
 
-const isStartOfSnippet = (line: string) =>
-    line.trim().match(/```\W*(JavaScript|js|es6|ts|typescript)\s?$/i);
+// Capture indentation (group 1) and language (group 2)
+const START_REGEX = /^(\s*)```\W*(JavaScript|js|es6|ts|typescript|python|py|bash|sh|zsh|shell|go|rust|rs|fortran|f90|f95|cobol|cob|c)\s?$/i;
+
+const isStartOfSnippet = (line: string) => line.match(START_REGEX);
 const isEndOfSnippet = (line: string) => line.trim() === "```";
 const isSkip = (line: string) => line.trim() === "<!-- skip-example -->";
 const isCodeSharedInFile = (line: string) =>
@@ -12,14 +14,35 @@ const isCodeSharedInFile = (line: string) =>
 function startNewSnippet(
     snippets: State,
     fileName: string,
-    lineNumber: number
+    lineNumber: number,
+    language: string,
+    indentation: string
 ) {
     const skip = snippets.skip;
     snippets.skip = false;
 
+    let normalizedLang = 'javascript';
+    const langLower = language.toLowerCase();
+    
+    if (['python', 'py'].includes(langLower)) {
+        normalizedLang = 'python';
+    } else if (['bash', 'sh', 'zsh', 'shell'].includes(langLower)) {
+        normalizedLang = langLower === 'shell' ? 'bash' : langLower;
+    } else if (langLower === 'go') {
+        normalizedLang = 'go';
+    } else if (['rust', 'rs'].includes(langLower)) {
+        normalizedLang = 'rust';
+    } else if (['fortran', 'f90', 'f95'].includes(langLower)) {
+        normalizedLang = 'fortran';
+    } else if (['cobol', 'cob'].includes(langLower)) {
+        normalizedLang = 'cobol';
+    } else if (langLower === 'c') {
+        normalizedLang = 'c';
+    }
+
     return Object.assign(snippets, {
         snippets: snippets.snippets.concat([
-            { code: "", fileName, lineNumber, complete: false, skip: skip ?? false }
+            { code: "", language: normalizedLang, fileName, lineNumber, complete: false, skip: skip ?? false, indentation }
         ])
     });
 }
@@ -29,7 +52,11 @@ function addLineToLastSnippet(line: string) {
         const lastSnippet = snippets.snippets[snippets.snippets.length - 1];
 
         if (lastSnippet && !lastSnippet.complete) {
-            lastSnippet.code += line + "\n";
+            let lineToAdd = line;
+            if (lastSnippet.indentation && line.startsWith(lastSnippet.indentation)) {
+                lineToAdd = line.slice(lastSnippet.indentation.length);
+            }
+            lastSnippet.code += lineToAdd + "\n";
         }
 
         return snippets;
@@ -59,8 +86,11 @@ function shareCodeInFile(snippets: State) {
 }
 
 function parseLine(line: string) {
-    if (isStartOfSnippet(line)) {
-        return startNewSnippet;
+    const startMatch = isStartOfSnippet(line);
+    if (startMatch) {
+        // startMatch[1] is indentation, startMatch[2] is language
+        return (snippets: State, fileName: string, lineNumber: number) => 
+            startNewSnippet(snippets, fileName, lineNumber, startMatch[2], startMatch[1]);
     }
 
     if (isEndOfSnippet(line)) {
