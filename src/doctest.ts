@@ -1,14 +1,20 @@
 "use strict";
 
 import { readFileSync } from "fs";
-import { runInNewContext } from "vm";
-import { transformSync } from "esbuild";
 import chalk from "chalk";
 
 import { flatten } from "./utils";
 import parseCodeSnippets from "./parse-code-snippets-from-markdown";
 import { Config, Sandbox, TestResult, ParsedFile, FileInfo, Snippet } from "./types";
 import { printResults } from "./reporter";
+import { pythonHandler } from "./languages/python";
+import { shellHandler } from "./languages/shell";
+import { goHandler } from "./languages/go";
+import { rustHandler } from "./languages/rust";
+import { fortranHandler } from "./languages/fortran";
+import { cobolHandler } from "./languages/cobol";
+import { cHandler } from "./languages/c";
+import { javascriptHandler } from "./languages/javascript";
 
 export { printResults };
 
@@ -94,29 +100,42 @@ function test(config: Config, _filename: string, sandbox?: Sandbox) {
         }
 
         let perSnippetSandbox: Sandbox;
+        let activeSandbox: Sandbox;
+        let isSharedSandbox = false;
 
         if (sandbox === undefined) {
             perSnippetSandbox = makeTestSandbox(config);
+            activeSandbox = perSnippetSandbox;
+        } else {
+            activeSandbox = sandbox;
+            isSharedSandbox = true;
         }
 
         if (config.beforeEach) {
             config.beforeEach();
         }
 
-        try {
-            const result = transformSync(code, {
-                loader: 'ts',
-                format: 'cjs',
-                target: 'node12'
-            });
-            code = result.code || "";
-
-            runInNewContext(code, perSnippetSandbox! || sandbox);
-
-            success = true;
-        } catch (e: any) {
-            stack = e.stack || "";
+        let result;
+        if (codeSnippet.language === 'python') {
+            result = pythonHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else if (['bash', 'sh', 'zsh'].includes(codeSnippet.language || '')) {
+            result = shellHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else if (codeSnippet.language === 'go') {
+            result = goHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else if (codeSnippet.language === 'rust') {
+            result = rustHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else if (codeSnippet.language === 'fortran') {
+            result = fortranHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else if (codeSnippet.language === 'cobol') {
+            result = cobolHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else if (codeSnippet.language === 'c') {
+            result = cHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
+        } else {
+            result = javascriptHandler(code, codeSnippet, config, activeSandbox, isSharedSandbox);
         }
+
+        success = result.success;
+        stack = result.stack;
 
         const status = success ? "pass" : "fail";
 

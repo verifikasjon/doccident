@@ -1,6 +1,6 @@
 {
   "name": "@doccident/doccident",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Test all the code in your markdown docs!",
   "main": "dist/doctest.js",
   "files": [
@@ -14,7 +14,8 @@
     "build": "tsc",
     "lint": "eslint .",
     "test": "vitest run",
-    "precommit": "npm run lint && npm run test",
+    "test:readme": "node bin/cmd.js README.md",
+    "precommit": "npm run lint && npm run test && npm run test:readme",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build"
   },
