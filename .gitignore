@@ -6,3 +6,4 @@ coverage/
 .env
 agentic-*.md
 output/
+*~
