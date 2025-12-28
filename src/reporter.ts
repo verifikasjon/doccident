@@ -81,15 +81,21 @@ function relevantStackDetails(stack: string) {
 }
 
 function markDownErrorLocation(result: TestResult) {
-    const match = result.stack.match(/eval.*?<[^>]*>:(\d+):(\d+)/);
+    const lines = result.stack.split("\n");
 
-    if (match) {
-        const mdLineNumber = parseInt(match[1], 10);
-        const columnNumber = parseInt(match[2], 10);
+    for (const line of lines) {
+        if (line.includes("eval")) {
+            const match = line.match(/<([^>]+)>:(\d+):(\d+)/);
 
-        const lineNumber = result.codeSnippet.lineNumber + mdLineNumber;
+            if (match) {
+                const mdLineNumber = parseInt(match[2], 10);
+                const columnNumber = parseInt(match[3], 10);
 
-        return `${result.codeSnippet.fileName}:${lineNumber}:${columnNumber}`;
+                const lineNumber = result.codeSnippet.lineNumber + mdLineNumber;
+
+                return `${result.codeSnippet.fileName}:${lineNumber}:${columnNumber}`;
+            }
+        }
     }
 
     return `${result.codeSnippet.fileName}:${result.codeSnippet.lineNumber}`;
