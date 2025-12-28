@@ -35,4 +35,3 @@ export const shellHandler: LanguageHandler = (code, snippet, _config, sandbox, i
 
     return { success, stack };
 };
-
