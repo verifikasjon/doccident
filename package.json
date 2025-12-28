@@ -1,6 +1,6 @@
 {
   "name": "@doccident/doccident",
-  "version": "0.0.4",
+  "version": "0.0.5-dev.0",
   "description": "Test all the code in your markdown docs!",
   "main": "dist/doctest.js",
   "files": [
