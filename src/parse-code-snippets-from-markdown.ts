@@ -1,33 +1,9 @@
 "use strict";
 
-export interface State {
-    snippets: Snippet[];
-    shareCodeInFile: boolean;
-    skip?: boolean;
-    complete: boolean;
-}
-
-export interface Snippet {
-    code: string;
-    fileName: string;
-    lineNumber: number;
-    complete: boolean;
-    skip: boolean;
-}
-
-export interface ParsedFile {
-    fileName: string;
-    codeSnippets: Snippet[];
-    shareCodeInFile: boolean;
-}
-
-export interface FileInfo {
-    contents: string;
-    fileName: string;
-}
+import { State, ParsedFile, FileInfo } from "./types";
 
 const isStartOfSnippet = (line: string) =>
-    line.trim().match(/```\W*(JavaScript|js|es6)\s?$/i);
+    line.trim().match(/```\W*(JavaScript|js|es6|ts|typescript)\s?$/i);
 const isEndOfSnippet = (line: string) => line.trim() === "```";
 const isSkip = (line: string) => line.trim() === "<!-- skip-example -->";
 const isCodeSharedInFile = (line: string) =>
@@ -43,7 +19,7 @@ function startNewSnippet(
 
     return Object.assign(snippets, {
         snippets: snippets.snippets.concat([
-            { code: "", fileName, lineNumber, complete: false, skip }
+            { code: "", fileName, lineNumber, complete: false, skip: skip ?? false }
         ])
     });
 }
@@ -60,9 +36,7 @@ function addLineToLastSnippet(line: string) {
     };
 }
 
-function endSnippet(snippets: State, fileName: string, lineNumber: number) {
-    // eslint-disable-next-line no-console
-    console.log("endSnippet", snippets, fileName, lineNumber);
+function endSnippet(snippets: State, _fileName: string, _lineNumber: number) {
     const lastSnippet = snippets.snippets[snippets.snippets.length - 1];
 
     if (lastSnippet) {

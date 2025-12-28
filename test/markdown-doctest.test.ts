@@ -1,11 +1,12 @@
-/* globals describe, it, beforeEach, afterEach */
 "use strict";
+
 
 import path from "path";
 import assert from "assert";
 import * as doctest from "../src/doctest";
+import { TestResult } from "../src/types";
 
-const getTestFilePath = (testFile) => {
+const getTestFilePath = (testFile: string) => {
     return path.join(__dirname, "/test_files/", testFile);
 };
 
@@ -198,6 +199,49 @@ describe("runTests", () => {
 
         assert.strictEqual(passingResults.length, 1);
     });
+
+    it("typescript", () => {
+        const files = [getTestFilePath("typescript.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        const passingResults = results.filter((result) => result.status === "pass");
+        const failingResults = results.filter((result) => result.status === "fail");
+
+        assert.strictEqual(passingResults.length, 2, results[0]?.stack);
+        assert.strictEqual(failingResults.length, 0);
+    });
+
+    it("edge cases and mixed languages", () => {
+        const files = [getTestFilePath("edge-cases.md")];
+        const config = {};
+
+        const results = doctest.runTests(files, config);
+
+        const passingResults = results.filter((result) => result.status === "pass");
+        const failingResults = results.filter((result) => result.status === "fail");
+        const skippedResults = results.filter((result) => result.status === "skip");
+
+        // 1 empty (pass), 1 js (pass), 1 ts (pass), 1 skipped (skip), 1 shared (pass), 1 shared consumer (pass)
+        // Total expected: 5 pass, 0 fail, 1 skip
+        assert.strictEqual(passingResults.length, 5, "Should have 5 passing tests");
+        assert.strictEqual(failingResults.length, 0, "Should have 0 failing tests");
+        assert.strictEqual(skippedResults.length, 1, "Should have 1 skipped test");
+    });
+
+    it("handles transform error", () => {
+        const files = [getTestFilePath("pass.md")];
+        const config = {
+            transformCode: () => { throw new Error("Transform error"); }
+        };
+
+        const results = doctest.runTests(files, config);
+        const failingResults = results.filter((result) => result.status === "fail");
+        
+        assert.strictEqual(failingResults.length, 1);
+        assert(failingResults[0].stack.includes("Encountered an error while transforming snippet"));
+    });
 });
 
 describe("Results printing and error handling", () => {
@@ -231,10 +275,10 @@ describe("Results printing and error handling", () => {
     });
 
     it("prints results with passing, failing and skipped tests", () => {
-        const mockResults = [
-            { status: "pass", codeSnippet: { fileName: "test.md", lineNumber: 10 }, stack: "" },
-            { status: "fail", codeSnippet: { fileName: "test.md", lineNumber: 20 }, stack: "Error at eval" },
-            { status: "skip", codeSnippet: { fileName: "test.md", lineNumber: 30 }, stack: "" }
+        const mockResults: TestResult[] = [
+            { status: "pass", codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false }, stack: "" },
+            { status: "fail", codeSnippet: { fileName: "test.md", lineNumber: 20, code: "", complete: true, skip: false }, stack: "Error at eval" },
+            { status: "skip", codeSnippet: { fileName: "test.md", lineNumber: 30, code: "", complete: true, skip: false }, stack: "" }
         ];
 
         doctest.printResults(mockResults);
@@ -246,22 +290,23 @@ describe("Results printing and error handling", () => {
     });
 
     it("prints success message when no failures", () => {
-        const mockResults = [
-            { status: "pass", codeSnippet: { fileName: "test.md", lineNumber: 10 }, stack: "" },
-            { status: "skip", codeSnippet: { fileName: "test.md", lineNumber: 30 }, stack: "" }
+        const mockResults: TestResult[] = [
+            { status: "pass", codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false }, stack: "" },
+            { status: "skip", codeSnippet: { fileName: "test.md", lineNumber: 30, code: "", complete: true, skip: false }, stack: "" }
         ];
 
         doctest.printResults(mockResults);
 
+        // Check that it counted correctly
         assert(logOutput.some(line => line.includes("Success!")));
         assert(!logOutput.some(line => line.includes("Failed:")));
     });
 
     it("prints helpful message for undefined variables", () => {
-        const mockResults = [
+        const mockResults: TestResult[] = [
             {
                 status: "fail",
-                codeSnippet: { fileName: "test.md", lineNumber: 20 },
+                codeSnippet: { fileName: "test.md", lineNumber: 20, code: "", complete: true, skip: false },
                 stack: "ReferenceError: myVariable is not defined\n    at eval"
             }
         ];
@@ -301,5 +346,83 @@ describe("Results printing and error handling", () => {
             return line.includes("Failed - ") &&
                 (line.includes(":") || line.includes(failingResults[0].codeSnippet.fileName));
         }));
+    });
+
+    it("truncates stack trace at doctest.js when eval is not present", () => {
+        const stack = `Error: failure
+    at userFunction (user.js:1:1)
+    at doctest.js (src/doctest.js:50:5)
+    at main.js:1:1`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should include userFunction
+        assert(logOutput.some(line => line.includes("userFunction")));
+        // Should NOT include main.js which is after doctest.js
+        assert(!logOutput.some(line => line.includes("main.js")));
+    });
+
+    it("prints full stack if neither eval nor doctest.js is present", () => {
+        const stack = `Error: failure
+    at userFunction (user.js:1:1)
+    at otherFunction (other.js:1:1)`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should include both
+        assert(logOutput.some(line => line.includes("userFunction")));
+        assert(logOutput.some(line => line.includes("otherFunction")));
+    });
+
+    it("falls back to file:line location if eval line format does not match", () => {
+        const stack = `Error: failure
+    at eval (some weird format)`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should fall back to test.md:10
+        assert(logOutput.some(line => line.includes("test.md:10")));
+    });
+
+    it("falls back to file:line location if eval is not in stack", () => {
+        const stack = `Error: failure
+    at function (file.js:1:1)`;
+
+        const mockResults: TestResult[] = [
+            {
+                status: "fail",
+                codeSnippet: { fileName: "test.md", lineNumber: 10, code: "", complete: true, skip: false },
+                stack: stack
+            }
+        ];
+
+        doctest.printResults(mockResults);
+
+        // Should fall back to test.md:10
+        assert(logOutput.some(line => line.includes("test.md:10")));
     });
 });
