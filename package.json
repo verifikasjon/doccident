@@ -1,6 +1,6 @@
 {
   "name": "@doccident/doccident",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Test all the code in your markdown docs!",
   "main": "dist/doctest.js",
   "files": [
@@ -32,7 +32,7 @@
     "Nick Johnstone",
     "Billaud Cipher <BillaudCipher@proton.me>"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/BillaudCipher/doccident/issues"
   },

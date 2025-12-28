@@ -27,6 +27,54 @@ export function printResults(results: TestResult[]) {
     } else {
         console.log(chalk.red("Failed: " + failingCount));
     }
+
+    // Summary Table
+    console.log("\nSummary Table:");
+
+    const headers = { lang: 'Language', file: 'File', line: 'Line', status: 'Status', time: 'Time (ms)' };
+    
+    const rows = results.map(r => {
+        return {
+            lang: r.codeSnippet.language || 'text',
+            file: r.codeSnippet.fileName,
+            line: r.codeSnippet.lineNumber.toString(),
+            status: r.status === 'pass' ? '✅' : (r.status === 'skip' ? '⏭️' : '❌'),
+            time: r.executionTime ? r.executionTime.toFixed(2) : '-'
+        };
+    });
+
+    const widths = {
+        lang: headers.lang.length,
+        file: headers.file.length,
+        line: headers.line.length,
+        status: headers.status.length,
+        time: headers.time.length
+    };
+
+    rows.forEach(row => {
+        widths.lang = Math.max(widths.lang, row.lang.length);
+        widths.file = Math.max(widths.file, row.file.length);
+        widths.line = Math.max(widths.line, row.line.length);
+        // Emojis are tricky. Let's assume they take 2 visual columns.
+        // '✅'.length is 1, '❌'.length is 1, '⏭️'.length is 2.
+        // We'll trust the string length for now but maybe ensure minimum for status?
+        widths.status = Math.max(widths.status, [...row.status].length); 
+        widths.time = Math.max(widths.time, row.time.length);
+    });
+
+    const padRight = (str: string, width: number) => str + ' '.repeat(Math.max(0, width - str.length));
+    const padLeft = (str: string, width: number) => ' '.repeat(Math.max(0, width - str.length)) + str;
+
+    // Header
+    console.log(`| ${padRight(headers.lang, widths.lang)} | ${padRight(headers.file, widths.file)} | ${padLeft(headers.line, widths.line)} | ${padRight(headers.status, widths.status)} | ${padLeft(headers.time, widths.time)} |`);
+    
+    // Separator
+    console.log(`|-${'-'.repeat(widths.lang)}-|-${'-'.repeat(widths.file)}-|-${'-'.repeat(widths.line)}-|-${'-'.repeat(widths.status)}-|-${'-'.repeat(widths.time)}-|`);
+
+    // Rows
+    rows.forEach(row => {
+        console.log(`| ${padRight(row.lang, widths.lang)} | ${padRight(row.file, widths.file)} | ${padLeft(row.line, widths.line)} | ${padRight(row.status, widths.status)} | ${padLeft(row.time, widths.time)} |`);
+    });
 }
 
 function printFailure(result: TestResult) {
