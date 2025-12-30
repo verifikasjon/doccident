@@ -1,1 +1,0 @@
-doccident is a library that helps people test code examples in documentation.
