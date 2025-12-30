@@ -3,12 +3,11 @@ permissions:
   contents: read
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-      - 'release/**'
-      - 'feature/**'
-  pull_request:
+      - working
+
 
 jobs:
   test:
