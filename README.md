@@ -695,3 +695,4 @@ This repository contains a dedicated guide for AI agents to understand how to us
 [**doccident/guide/index.md**](./guide/index.md)
 
 This directory contains instructions on capabilities, verification workflows, and configuration specifically structured for machine consumption.
+TEST
