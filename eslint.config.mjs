@@ -1,4 +1,3 @@
-import { defineConfig, globalIgnores } from "eslint/config";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import importPlugin from "eslint-plugin-import";
 import globals from "globals";
@@ -16,17 +15,18 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
-export default defineConfig([
-    globalIgnores([
-        "dist/**",
-        "node_modules/**",
-        "**/*.test.ts",
-        "docs/dist/**",
-        "docs/node_modules/**",
-    ]),
+export default [
     {
-        extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
-
+        ignores: [
+            "dist/**",
+            "node_modules/**",
+            "**/*.test.ts",
+            "docs/dist/**",
+            "docs/node_modules/**",
+        ],
+    },
+    ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
+    {
         plugins: {
             "@typescript-eslint": typescriptEslint,
             "import": importPlugin,
@@ -81,4 +81,4 @@ export default defineConfig([
                 ]
             }]
         },
-    }]);
+    }];
