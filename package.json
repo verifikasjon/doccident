@@ -36,7 +36,7 @@
   "bugs": {
     "url": "https://github.com/verifikasjon/doccident/issues"
   },
-  "homepage": "https://github.com/verifikasjon/doccident",
+  "homepage": "https://verifikasjon.github.io/doccident/",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.23.0",
