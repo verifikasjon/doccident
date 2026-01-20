@@ -1,6 +1,6 @@
 {
   "name": "@doccident/doccident",
-  "version": "0.0.12",
+  "version": "0.0.13-dev.0",
   "description": "Test all the code in your markdown docs!",
   "main": "dist/doctest.js",
   "files": [
@@ -36,7 +36,7 @@
   "bugs": {
     "url": "https://github.com/verifikasjon/doccident/issues"
   },
-  "homepage": "https://github.com/verifikasjon/doccident",
+  "homepage": "https://verifikasjon.github.io/doccident/",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.23.0",
